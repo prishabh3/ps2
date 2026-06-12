@@ -102,7 +102,10 @@ input[type=number]:focus,select:focus{border-color:var(--accent)}
 
 /* ── main ── */
 main{max-width:1440px;margin:0 auto;padding:0 20px 60px}
-.table-wrap{margin-top:14px;border:1px solid var(--border);border-radius:var(--r-lg);overflow-x:auto}
+/* NOTE: no overflow:auto/scroll here — it would turn .table-wrap into the
+   scroll container for the sticky <thead>, pinning it relative to the table
+   instead of flush under the page header. Keep overflow visible. */
+.table-wrap{margin-top:14px;border:1px solid var(--border);border-radius:var(--r-lg);overflow:visible}
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:780px}
 thead th{position:sticky;top:var(--header-h);z-index:30;background:var(--surface-3);border-bottom:1px solid var(--border-hi);text-align:left;padding:8px 11px;font-size:11px;color:var(--muted);cursor:pointer;user-select:none;white-space:nowrap;font-weight:600;text-transform:uppercase;letter-spacing:.05em;transition:color .15s;box-shadow:0 3px 8px rgba(0,0,0,.25)}
 thead th:hover{color:var(--text)}
