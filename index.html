@@ -136,6 +136,7 @@ td.name-cell{font-weight:600;font-size:13.5px;max-width:260px}
 .tech-pills{display:flex;flex-wrap:wrap;gap:3px}
 .tech-pills span{background:var(--surface-2);border:1px solid var(--border);color:var(--muted);border-radius:4px;padding:1px 6px;font-size:11px;white-space:nowrap}
 .tech-pills .more{color:var(--muted);border:none;background:none;padding:1px 2px;font-size:11px;cursor:default}
+.tech-pills span.role-pill{background:var(--accent-dim);color:var(--accent-lit);border-color:rgba(99,102,241,.28)}
 
 /* stipend */
 td.stip-cell{min-width:105px}
@@ -267,8 +268,8 @@ footer{color:var(--muted);font-size:11.5px;text-align:center;padding:28px 20px;b
         <label class="fld">State
           <div class="ms" data-key="state"></div>
         </label>
-        <label class="fld">Work Mode
-          <div class="ms" data-key="workMode"></div>
+        <label class="fld">Role
+          <div class="ms" data-key="role"></div>
         </label>
         <label class="fld">Eligible Branch
           <div class="ms" data-key="branch"></div>
@@ -317,7 +318,7 @@ footer{color:var(--muted);font-size:11.5px;text-align:center;padding:28px 20px;b
           <th data-sort="stationName">Station <span class="arr"></span></th>
           <th data-sort="projectTitle">Project <span class="arr"></span></th>
           <th>Tech</th>
-          <th data-sort="workMode">Mode <span class="arr"></span></th>
+          <th>Role</th>
           <th data-sort="state">Location <span class="arr"></span></th>
           <th data-sort="stipend">Stipend <span class="arr"></span></th>
           <th data-sort="cgpaMin">CGPA req <span class="arr"></span></th>
@@ -20969,7 +20970,7 @@ const expanded = new Set();   // open detail rows
 const byId = new Map();
 
 const F = {
-  q: '', domain: new Set(), state: new Set(), workMode: new Set(), branch: new Set(),
+  q: '', domain: new Set(), state: new Set(), role: new Set(), branch: new Set(),
   projectDomain: new Set(),
   minStipend: 0, myCgpa: null, maxCgpaReq: null,
   hasStipend: false, hasMentor: false, hasDesc: false, onlyMine: false,
@@ -21103,6 +21104,35 @@ function parseBranches(raw) {
 }
 
 /* ============================================================
+   ROLE CLASSIFICATION (derived from project domains + title)
+   ============================================================ */
+const ROLE_RULES = [
+  ['Software / SDE',           /\bsde\b|software|back[\s-]?end|front[\s-]?end|full[\s-]?stack|web develop|app develop|application develop|platform engineer|devops|cloud|database|systems software|\bapi\b|programming/],
+  ['Data Science & Analytics', /data scien|data analy|\banalytics\b|business intelligence|data engineer|quantitative research|statistic/],
+  ['AI / ML',                  /artificial intelligence|machine learning|deep learning|gen\s?ai|genai|\bllm\b|agentic|\bnlp\b|computer vision|\bai\b|\bml\b/],
+  ['Product',                  /product manage|product analyst|product intern|product growth|product ops|associate product|\bapm\b|product develop/],
+  ['Finance / Quant',          /financ|\bquant|\brisk\b|trading|investment|\bequity|credit|portfolio|banking|fintech|treasury|actuar|wealth|markets/],
+  ['Electronics / VLSI',       /vlsi|electronics|hardware|embedded|firmware|\brtl\b|physical design|analog|digital design|semiconductor|\bchip\b|fpga|\bpcb\b|design verification|silicon|\basic\b/],
+  ['Mechanical / Core',        /mechanical|thermal|\bcad\b|manufactur|chemical|civil|structural|automotive|metallurg|materials|robotics|aerospace/],
+  ['Marketing / Growth',       /marketing|\bgrowth\b|\bgtm\b|go[\s-]?to[\s-]?market|\bsales\b|\bbrand\b|business development/],
+  ['Operations / SCM',         /operations|supply chain|logistics|procurement|warehouse|\binventory/],
+  ['Business / Strategy',      /business analyst|strateg|consulting|founder|management trainee|market research/],
+  ['Research / R&D',           /\bresearch\b|\br&d\b|scientist|physics|biology|astrophysics|chemistry/],
+];
+function classifyRoles(s) {
+  // role = what you'll DO (project domains + title), NOT the company's business domain
+  const hay = ((s.projectDomains||[]).join(' ') + ' ' + (s.projectTitle||'')).toLowerCase();
+  const out = [];
+  for (const [label, re] of ROLE_RULES) if (re.test(hay)) out.push(label);
+  return out;
+}
+function roleChips(s) {
+  const r = s._roles || [];
+  if (!r.length) return `<span style="color:var(--muted)">—</span>`;
+  return `<div class="tech-pills">${r.slice(0,2).map(x=>`<span class="role-pill">${esc(x)}</span>`).join('')}${r.length>2?`<span class="more" title="${esc(r.slice(2).join(', '))}">+${r.length-2}</span>`:''}</div>`;
+}
+
+/* ============================================================
    FILTER + SORT
    ============================================================ */
 let stipSorted = [];
@@ -21117,12 +21147,12 @@ function applyFilters() {
   const q = F.q.toLowerCase().trim();
   view = STATIONS.filter(s => {
     if (q) {
-      const hay = (s.stationName + ' ' + s.projectTitle + ' ' + s.description + ' ' + s.mentorName + ' ' + s._tech.join(' ') + ' ' + bizOf(s) + ' ' + (s.projectDomains||[]).join(' ') + ' ' + (s.visitedCompanies||[]).join(' ')).toLowerCase();
+      const hay = (s.stationName + ' ' + s.projectTitle + ' ' + s.description + ' ' + s.mentorName + ' ' + s._tech.join(' ') + ' ' + bizOf(s) + ' ' + (s.projectDomains||[]).join(' ') + ' ' + (s._roles||[]).join(' ') + ' ' + (s.visitedCompanies||[]).join(' ')).toLowerCase();
       if (!hay.includes(q)) return false;
     }
     if (F.domain.size && !F.domain.has(bizOf(s)))         return false;
     if (F.state.size  && !F.state.has(s.state))           return false;
-    if (F.workMode.size && !F.workMode.has(normMode(s.workMode))) return false;
+    if (F.role.size && !(s._roles||[]).some(r => F.role.has(r))) return false;
     if (F.branch.size) { if (!s._branches.some(b => F.branch.has(b))) return false; }
     if (F.projectDomain.size) { if (!(s.projectDomains||[]).some(d => F.projectDomain.has(d))) return false; }
     if (F.onlyVisited && !s.visited) return false;
@@ -21223,7 +21253,7 @@ function render() {
       <td class="name-cell"><div class="station-name" title="${esc(s.stationName)}">${esc(s.stationName)}</div><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px">${bizOf(s)?`<span class="dom-tag" title="${esc(bizOf(s))}">${esc(bizOf(s))}</span>`:''}${s.visited?`<span class="vis-chip" title="Interaction company — ${esc((s.visitedCompanies||[]).join('; '))}. Verify on PSMS.">★ Interaction</span>`:''}</div></td>
       <td style="max-width:320px"><div style="font-size:13px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${esc(s.projectTitle||'—')}</div></td>
       <td>${techPills(s)}</td>
-      <td>${modeChip(s.workMode)}</td>
+      <td>${roleChips(s)}</td>
       <td><div style="font-size:13px">${esc(s.state||'—')}</div>${s.address?`<div style="color:var(--muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px" title="${esc(s.address)}">${esc(s.address.split(',')[0])}</div>`:''}</td>
       <td class="stip-cell"><div class="stip-val${stip?'':' zero'}">${fmtMoney(stip, s.currency)}</div>${stip?`<div class="stip-bar"><i style="width:${Math.max(4,Math.round(pct*100))}%"></i></div>`:''}</td>
       <td>${cgpaCell(s)}</td>
@@ -21591,7 +21621,7 @@ document.getElementById('resetBtn').addEventListener('click', doReset);
 
 function doReset() {
   F.q=''; F.minStipend=0; F.myCgpa=null; F.maxCgpaReq=null;
-  ['domain','state','workMode','branch','projectDomain'].forEach(k => F[k].clear());
+  ['domain','state','role','branch','projectDomain'].forEach(k => F[k].clear());
   F.hasStipend=F.hasMentor=F.hasDesc=F.onlyMine=F.onlyVisited=F.hideVisited=false;
   document.getElementById('search').value = '';
   document.getElementById('cgpaInput').value = '';
@@ -21654,6 +21684,7 @@ function loadStations(stations) {
     // ensure descriptions are clean even when loaded from JSON
     s.description  = stripHtml(s.description  || '');
     s.projectTitle = stripHtml(s.projectTitle || '');
+    if (!s._roles) s._roles = classifyRoles(s);
   });
 
   const withDetails = STATIONS.filter(s => s.projectTitle || s.mentorName || s.stipend).length;
@@ -21666,7 +21697,7 @@ function loadStations(stations) {
   const opts = {
     domain:        uniq(s => bizOf(s)),
     state:         uniq(s => s.state),
-    workMode:      uniq(s => normMode(s.workMode)),
+    role:          uniq(s => s._roles),
     branch:        uniq(s => s._branches),
     projectDomain: uniq(s => s.projectDomains),
   };
