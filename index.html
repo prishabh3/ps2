@@ -21510,7 +21510,12 @@ let filtersOpen = false, ovTimer, hRafId;
 
 function updateHeaderH() {
   const h = document.querySelector('header');
-  if (h) document.documentElement.style.setProperty('--header-h', h.getBoundingClientRect().height + 'px');
+  if (h) document.documentElement.style.setProperty('--header-h', Math.ceil(h.getBoundingClientRect().height) + 'px');
+}
+let _hhRaf = 0;
+function scheduleHeaderH() {           // cheap, rAF-throttled re-measure
+  if (_hhRaf) return;
+  _hhRaf = requestAnimationFrame(() => { _hhRaf = 0; updateHeaderH(); });
 }
 
 // Animate --header-h updates for the full duration of the CSS transition (350ms)
@@ -21540,12 +21545,16 @@ function setFilters(open) {
 }
 filterToggle.addEventListener('click', () => setFilters(!filtersOpen));
 
-/* sticky header height tracking — initial + resize */
+/* sticky header height tracking — keep --header-h in sync so the table's
+   sticky column header always pins flush under the page header */
 (function() {
   updateHeaderH();
-  window.addEventListener('load', updateHeaderH);
-  if (window.ResizeObserver) new ResizeObserver(updateHeaderH).observe(document.querySelector('header'));
-  window.addEventListener('resize', updateHeaderH, {passive: true});
+  ['load','resize','orientationchange','scroll'].forEach(ev =>
+    window.addEventListener(ev, scheduleHeaderH, {passive: true}));
+  document.addEventListener('DOMContentLoaded', updateHeaderH);
+  if (window.ResizeObserver) new ResizeObserver(scheduleHeaderH).observe(document.querySelector('header'));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(updateHeaderH).catch(()=>{});
+  [0, 120, 400].forEach(t => setTimeout(updateHeaderH, t));   // catch post-load reflows
 })();
 
 let stimer;
@@ -21681,6 +21690,7 @@ function loadStations(stations) {
   document.getElementById('mainContent').style.display = '';
 
   view = [...STATIONS]; sortView(); render(); refreshPrefUI();
+  updateHeaderH(); scheduleHeaderH();   // header text/pill just changed — re-pin thead
 }
 
 function loadCSVText(text) {
