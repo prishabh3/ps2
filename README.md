@@ -13,9 +13,13 @@ Open `index.html` to browse, search, filter, and build a ranked preference list.
 - Drag-and-drop preference ranking drawer with CSV / JSON / shareable-link export.
 
 ## Data
-`stations.json` is a PSMS portal extract (554 stations), enriched by `build_enrich.py` with:
+`stations.json` is a PSMS portal extract (**579 stations**), enriched by `build_enrich.py` with:
 - clean **business domain** + **project-domain tags** (from the project-titles sheet), and
 - **visited / interaction** flags (from the PS Tracker), matched by company name.
+
+`add_missing.py` adds the 25 stations announced after the portal extract (e.g. the
+June-12 batch: all CRRI divisions, Ather Energy units, KPMG, RISA Healthcare, …),
+sourced from the Student-Preference export + announced/project sheets.
 
 The data is also embedded inline in `index.html`, so it works by **just opening the file**
 (double-click) — no server needed. When served over http(s) it falls back to fetching
