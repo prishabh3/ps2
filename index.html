@@ -21582,7 +21582,10 @@ filterToggle.addEventListener('click', () => setFilters(!filtersOpen));
    sticky column header always pins flush under the page header */
 (function() {
   updateHeaderH();
-  ['load','resize','orientationchange','scroll'].forEach(ev =>
+  // NOTE: do NOT re-measure on scroll — header height is constant while scrolling,
+  // and re-writing --header-h every frame makes the sticky thead jitter.
+  // ResizeObserver below already catches every genuine header height change.
+  ['load','resize','orientationchange'].forEach(ev =>
     window.addEventListener(ev, scheduleHeaderH, {passive: true}));
   document.addEventListener('DOMContentLoaded', updateHeaderH);
   if (window.ResizeObserver) new ResizeObserver(scheduleHeaderH).observe(document.querySelector('header'));
