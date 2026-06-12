@@ -13,7 +13,7 @@ Open `index.html` to browse, search, filter, and build a ranked preference list.
 - Drag-and-drop preference ranking drawer with CSV / JSON / shareable-link export.
 
 ## Data
-`stations.json` is a PSMS portal extract (**659 stations**), enriched by `build_enrich.py` with:
+`stations.json` is a PSMS portal extract (**656 stations**), enriched by `build_enrich.py` with:
 - clean **business domain** + **project-domain tags** (from the project-titles sheet), and
 - **visited / interaction** flags (from the PS Tracker), matched by company name.
 
