@@ -17,16 +17,14 @@ Open `index.html` to browse, search, filter, and build a ranked preference list.
 - clean **business domain** + **project-domain tags** (from the project-titles sheet), and
 - **visited / interaction** flags (from the PS Tracker), matched by company name.
 
-Browsers block `fetch()` over `file://`, so serve the folder:
-
-```bash
-python3 -m http.server 8000   # then open http://localhost:8000
-```
+The data is also embedded inline in `index.html`, so it works by **just opening the file**
+(double-click) — no server needed. When served over http(s) it falls back to fetching
+`stations.json`.
 
 ### Regenerating the data
 ```bash
 python3 build_enrich.py            # dry run (prints match report)
-python3 build_enrich.py --write    # rewrites stations.json in place
+python3 build_enrich.py --write    # rewrites stations.json AND re-embeds it into index.html
 ```
 Source `.xlsx` paths are configurable via the `PROJ_XLSX` / `TRACK_XLSX` env vars.
 

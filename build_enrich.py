@@ -188,8 +188,30 @@ print(f"unmatched companies ({len(unmatched)}):")
 for c in unmatched:
     print("   -", c)
 
+def embed_into_index(json_text):
+    """Inject the data inline so index.html opens via a plain double-click (no server)."""
+    import re
+    idx_html = HERE / "index.html"
+    html = idx_html.read_text(encoding="utf-8")
+    safe = json_text.replace("</", "<\\/")        # can't break out of the <script>
+    block = ('<script type="application/json" id="dataStore">\n'
+             + safe + "\n</script>\n")
+    html = re.sub(r'<script type="application/json" id="dataStore">.*?</script>\n?',
+                  "", html, flags=re.S)            # idempotent
+    anchor = "\n<script>\n"
+    i = html.index(anchor)
+    html = html[:i + 1] + block + html[i + 1:]
+    idx_html.write_text(html, encoding="utf-8")
+    print(f"EMBEDDED data into {idx_html}")
+
+
 if WRITE:
-    json.dump(doc, open(STATIONS_JSON, "w"), ensure_ascii=False, indent=0)
+    txt = json.dumps(doc, ensure_ascii=False, indent=0)
+    STATIONS_JSON.write_text(txt, encoding="utf-8")
     print(f"\nWROTE {STATIONS_JSON}")
+    try:
+        embed_into_index(txt)
+    except Exception as e:
+        print(f"(skipped index.html embed: {e})")
 else:
-    print("\n(dry run — pass --write to update stations.json)")
+    print("\n(dry run — pass --write to update stations.json + index.html)")
