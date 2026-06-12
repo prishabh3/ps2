@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PS-II Station Browser · 2026-27</title>
+<style>
+:root {
+  --bg: #0c0e13;
+  --surface: #13171e;
+  --surface-2: #191f2b;
+  --surface-3: #1e2535;
+  --border: rgba(255,255,255,0.07);
+  --border-hi: rgba(255,255,255,0.13);
+  --text: #dde3ef;
+  --muted: #6e7a90;
+  --accent: #6366f1;
+  --accent-dim: rgba(99,102,241,0.13);
+  --accent-lit: #818cf8;
+  --green: #4ade80;
+  --green-dim: rgba(74,222,128,0.1);
+  --amber: #fbbf24;
+  --amber-dim: rgba(251,191,36,0.1);
+  --red: #f87171;
+  --red-dim: rgba(248,113,113,0.1);
+  --cyan: #22d3ee;
+  --r: 7px; --r-lg: 11px;
+  --header-h: 170px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font:13.5px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+/* ── header ── */
+header{position:sticky;top:0;z-index:50;background:rgba(12,14,19,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:13px 20px}
+.hdr{max-width:1440px;margin:0 auto}
+.title-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:15px;font-weight:700;letter-spacing:-.01em}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);font-size:11.5px}
+.pill{background:var(--accent-dim);color:var(--accent-lit);border:1px solid rgba(99,102,241,.25);padding:2px 10px;border-radius:99px;font-size:11.5px;font-weight:600;margin-left:auto;white-space:nowrap}
+
+/* search + cgpa row */
+.search-row{display:flex;gap:8px;margin-top:10px;align-items:center}
+.search-wrap{flex:1;position:relative}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none}
+.search-wrap input{width:100%;background:var(--surface);border:1px solid var(--border-hi);color:var(--text);padding:9px 12px 9px 36px;border-radius:var(--r);font-size:13.5px;outline:none;transition:border-color .15s}
+.search-wrap input:focus{border-color:var(--accent)}
+.search-wrap input::placeholder{color:var(--muted)}
+.cgpa-wrap{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border-hi);border-radius:var(--r);padding:4px 10px;white-space:nowrap;flex-shrink:0}
+.cgpa-wrap label{font-size:11.5px;color:var(--muted);font-weight:500}
+.cgpa-wrap input{width:52px;background:transparent;border:none;color:var(--text);font-size:13px;font-weight:600;outline:none;text-align:right}
+.cgpa-wrap input::-webkit-inner-spin-button,.cgpa-wrap input::-webkit-outer-spin-button{-webkit-appearance:none}
+.cgpa-badge{font-size:10.5px;background:var(--green-dim);color:var(--green);border-radius:4px;padding:1px 5px;font-weight:600}
+
+/* actions */
+.actions{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;align-items:center}
+.btn{background:var(--surface);color:var(--text);border:1px solid var(--border-hi);padding:5px 12px;border-radius:var(--r);cursor:pointer;font-size:12.5px;transition:all .15s;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent-lit)}
+.btn.active{background:var(--accent-dim);color:var(--accent-lit);border-color:rgba(99,102,241,.3)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--text);background:var(--surface)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.btn.primary:hover{background:#4f52d9;border-color:#4f52d9;color:#fff}
+#myListBtn{display:flex;align-items:center;gap:5px;font-weight:600}
+#myListBtn .n{background:var(--accent);color:#fff;border-radius:99px;padding:0 6px;font-size:10.5px;font-weight:700}
+
+/* filter panel */
+.filter-panel{max-height:0;opacity:0;overflow:hidden;transition:max-height .32s ease,opacity .22s ease,margin .22s ease}
+.filter-panel.open{max-height:600px;opacity:1;margin-top:10px}
+.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:13px 14px}
+.filters .full{grid-column:1/-1}
+.fld{display:flex;flex-direction:column;gap:4px;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+input[type=number],select{background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:var(--r);font-size:13px;width:100%;outline:none;transition:border-color .15s}
+input[type=number]:focus,select:focus{border-color:var(--accent)}
+.toggles{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tog{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);cursor:pointer;padding:4px 8px;border-radius:var(--r);transition:background .15s}
+.tog:hover{background:var(--surface-2)}
+.tog input{cursor:pointer}
+
+/* multiselect */
+.ms{position:relative}
+.ms-display{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:5px 9px;cursor:pointer;min-height:32px;display:flex;flex-wrap:wrap;gap:3px;align-items:center;font-size:12.5px}
+.ms-display .ph{color:var(--muted)}
+.chip{background:var(--accent-dim);color:var(--accent-lit);border-radius:4px;padding:1px 6px;font-size:11px;font-weight:500}
+.ms-pop{display:none;position:absolute;z-index:45;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border-hi);border-radius:var(--r-lg);max-height:230px;overflow:auto;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,.6);min-width:180px}
+.ms.open .ms-pop{display:block}
+.ms-pop input.msf{width:100%;margin-bottom:5px}
+.ms-opt{display:flex;gap:7px;align-items:center;padding:5px 7px;border-radius:5px;cursor:pointer;font-size:12.5px;text-transform:none;letter-spacing:0;color:var(--text)}
+.ms-opt:hover{background:var(--surface-2)}
+.ms-opt input{width:auto;flex-shrink:0}
+
+/* ── upload zone ── */
+#upload-zone{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px 20px;text-align:center;max-width:520px;margin:0 auto}
+#upload-zone.vis{display:flex}
+.drop-box{width:100%;border:2px dashed var(--border-hi);border-radius:var(--r-lg);padding:48px 24px;cursor:pointer;transition:all .2s;background:var(--surface)}
+.drop-box:hover,.drop-box.dragover{border-color:var(--accent);background:var(--accent-dim)}
+.drop-box svg{opacity:.35;margin-bottom:12px}
+.drop-box p{font-size:14px;font-weight:600;margin-bottom:6px}
+.drop-box small{color:var(--muted);font-size:12px}
+.or{color:var(--muted);margin:14px 0;font-size:12px}
+
+/* ── main ── */
+main{max-width:1440px;margin:0 auto;padding:0 20px 60px}
+.table-wrap{margin-top:14px;border:1px solid var(--border);border-radius:var(--r-lg);overflow-x:auto}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:780px}
+thead th{position:sticky;top:var(--header-h);z-index:30;background:var(--surface-3);border-bottom:1px solid var(--border-hi);text-align:left;padding:8px 11px;font-size:11px;color:var(--muted);cursor:pointer;user-select:none;white-space:nowrap;font-weight:600;text-transform:uppercase;letter-spacing:.05em;transition:color .15s;box-shadow:0 3px 8px rgba(0,0,0,.25)}
+thead th:hover{color:var(--text)}
+thead th.sorted{color:var(--accent-lit)}
+thead th .arr{color:var(--accent);font-size:10px;margin-left:2px}
+thead th:first-child{border-top-left-radius:var(--r-lg)}
+thead th:last-child{border-top-right-radius:var(--r-lg)}
+tbody tr.main-row{border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+tbody tr.main-row:hover{background:var(--surface-3)}
+tbody tr.main-row.open{background:var(--surface-2)}
+tbody td{padding:10px 11px;vertical-align:middle}
+td.name-cell{font-weight:600;font-size:13.5px;max-width:260px}
+.station-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.last-row > td:first-child{border-bottom-left-radius:var(--r-lg)}
+.last-row > td:last-child{border-bottom-right-radius:var(--r-lg)}
+
+/* chips in table */
+.wm-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;border:1px solid;white-space:nowrap}
+.wm-remote{color:#4ade80;border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.08)}
+.wm-hybrid{color:#fbbf24;border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.08)}
+.wm-office{color:#60a5fa;border-color:rgba(96,165,250,.3);background:rgba(96,165,250,.08)}
+.wm-unknown{color:var(--muted);border-color:var(--border);background:transparent}
+.dom-tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:4px;background:var(--surface-2);border:1px solid var(--border);color:var(--muted);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.vis-chip{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:1px 7px;border-radius:99px;font-weight:700;color:var(--green);border:1px solid rgba(74,222,128,.32);background:var(--green-dim);white-space:nowrap;cursor:help;vertical-align:middle}
+.pill-list.amber span{background:var(--amber-dim);color:var(--amber)}
+.vis-note{background:var(--green-dim);border:1px solid rgba(74,222,128,.25);border-radius:var(--r);padding:9px 12px;font-size:12.5px;color:var(--text)}
+.vis-note b{color:var(--green)}
+.tech-pills{display:flex;flex-wrap:wrap;gap:3px}
+.tech-pills span{background:var(--surface-2);border:1px solid var(--border);color:var(--muted);border-radius:4px;padding:1px 6px;font-size:11px;white-space:nowrap}
+.tech-pills .more{color:var(--muted);border:none;background:none;padding:1px 2px;font-size:11px;cursor:default}
+
+/* stipend */
+td.stip-cell{min-width:105px}
+.stip-val{font-variant-numeric:tabular-nums;font-weight:600}
+.stip-val.zero{color:var(--muted);font-weight:400}
+.stip-bar{height:3px;border-radius:2px;background:var(--surface-2);margin-top:4px;overflow:hidden}
+.stip-bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-dim),var(--accent));border-radius:2px}
+
+/* cgpa badge in table */
+.cgpa-ok{color:var(--green);font-weight:600}
+.cgpa-no{color:var(--red);font-weight:600}
+.cgpa-na{color:var(--muted)}
+
+/* pref cell */
+td.pref-cell,th.pref-cell{width:40px;text-align:center;cursor:default!important}
+.add-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--muted);width:27px;height:24px;border-radius:6px;cursor:pointer;font-size:15px;line-height:1;transition:all .15s}
+.add-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;min-width:27px;height:24px;background:var(--accent);color:#fff;border-radius:6px;font-weight:700;font-size:11px;cursor:pointer;padding:0 5px;transition:all .15s}
+.rank-badge:hover{background:var(--red);color:#fff}
+
+/* ── detail row ── */
+tr.detail-row > td{padding:0;background:var(--surface)}
+.detail-box{padding:16px 18px;border-top:1px dashed var(--border)}
+.detail-tabs{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:1px}
+.dtab{background:none;border:none;color:var(--muted);cursor:pointer;padding:5px 12px;font-size:12.5px;border-radius:var(--r) var(--r) 0 0;transition:all .15s;font-weight:500}
+.dtab:hover{color:var(--text)}
+.dtab.on{color:var(--accent-lit);background:var(--accent-dim);font-weight:600}
+.tab-pane{display:none}
+.tab-pane.on{display:block}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dblock{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.dblock.full{grid-column:1/-1}
+.dblock h4{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:3px 10px;font-size:12.5px}
+.kv dt{color:var(--muted)}
+.kv dd{color:var(--text);word-break:break-word}
+.desc{font-size:13px;white-space:pre-wrap;color:var(--text);line-height:1.65}
+.pill-list{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.pill-list span{background:var(--accent-dim);color:var(--accent-lit);padding:2px 8px;border-radius:5px;font-size:11.5px;font-weight:500}
+.pill-list.green span{background:var(--green-dim);color:var(--green)}
+.mentor-card{display:flex;align-items:flex-start;gap:12px;padding:10px}
+.mentor-avatar{width:38px;height:38px;border-radius:50%;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;color:var(--accent-lit);font-weight:700;font-size:15px;flex-shrink:0}
+.mentor-info .nm{font-weight:600;font-size:13.5px}
+.mentor-info .em a{color:var(--accent-lit);text-decoration:none;font-size:12.5px}
+.mentor-info .em a:hover{text-decoration:underline}
+.pref-action-btn{margin-top:10px}
+.src-link{color:var(--accent-lit);text-decoration:none;font-size:12px}
+.src-link:hover{text-decoration:underline}
+.no-data{color:var(--muted);font-size:12.5px;font-style:italic}
+
+/* ── drawer ── */
+#drawer{position:fixed;top:0;right:0;height:100vh;width:370px;max-width:93vw;z-index:60;background:var(--surface);border-left:1px solid var(--border);box-shadow:-14px 0 40px rgba(0,0,0,.5);transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+#drawer.open{transform:translateX(0)}
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:55;opacity:0;pointer-events:none;transition:opacity .25s}
+#overlay.open{opacity:1;pointer-events:auto}
+.dhead{padding:15px 17px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.dhead h2{margin:0;font-size:14.5px;font-weight:700}
+.dhead .cnt{color:var(--muted);font-size:12px}
+.dhead .x{margin-left:auto;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;width:28px;height:28px;border-radius:6px;transition:all .15s}
+.dhead .x:hover{color:var(--text);background:var(--surface-2)}
+.pref-list{flex:1;overflow:auto;padding:9px 11px}
+.pitem{display:flex;align-items:center;gap:7px;padding:8px 10px;margin-bottom:5px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);transition:border-color .15s}
+.pitem:hover{border-color:var(--border-hi)}
+.pitem.drag-over{border-color:var(--accent);border-style:dashed}
+.pitem.dragging{opacity:.35}
+.pitem .grip{cursor:grab;color:var(--muted);font-size:14px;user-select:none}
+.pitem .rnk{min-width:20px;text-align:right;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;font-size:12px}
+.pitem .info{flex:1;min-width:0}
+.pitem .info .nm{font-weight:600;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pitem .info .meta{color:var(--muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.pitem .acts{display:flex;gap:3px}
+.pitem .acts button{background:var(--surface);border:1px solid var(--border);color:var(--muted);width:24px;height:24px;border-radius:5px;cursor:pointer;font-size:11px;padding:0;transition:all .15s}
+.pitem .acts button:hover{border-color:var(--accent);color:var(--accent)}
+.pitem .acts button.rm:hover{border-color:var(--red);color:var(--red)}
+.pempty{color:var(--muted);text-align:center;padding:36px 20px;font-size:12.5px}
+.dfoot{border-top:1px solid var(--border);padding:11px;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.dfoot button{background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:7px;border-radius:var(--r);cursor:pointer;font-size:12px;transition:all .15s}
+.dfoot button:hover{border-color:var(--accent)}
+.dfoot button.danger{color:var(--red)}
+.dfoot button.danger:hover{border-color:var(--red)}
+
+/* toast */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--accent);color:#fff;padding:9px 18px;border-radius:var(--r);font-weight:600;font-size:12.5px;z-index:80;opacity:0;pointer-events:none;transition:all .22s ease}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+footer{color:var(--muted);font-size:11.5px;text-align:center;padding:28px 20px;border-top:1px solid var(--border);margin-top:20px}
+
+@media(max-width:720px){
+  .detail-grid{grid-template-columns:1fr}
+  .dblock.full{grid-column:1}
+  .cgpa-wrap{display:none}
+  header{padding:11px 14px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr">
+    <div class="title-row">
+      <h1>PS-II <span>Station Browser</span></h1>
+      <span class="sub" id="metaSub">Loading…</span>
+      <span class="pill" id="countPill">—</span>
+    </div>
+    <div class="search-row">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search" placeholder="Search station, project, description, mentor…" autocomplete="off">
+      </div>
+      <div class="cgpa-wrap" title="Shows only stations where CGPA requirement ≤ your CGPA">
+        <label for="cgpaInput">My CGPA</label>
+        <input type="number" id="cgpaInput" min="0" max="10" step="0.1" placeholder="—">
+        <span class="cgpa-badge" id="cgpaBadge" style="display:none">filtering</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="filterToggle">Filters ▼</button>
+      <button class="btn ghost" id="resetBtn">Reset</button>
+      <button class="btn" id="exportBtn">Export CSV</button>
+      <button class="btn ghost" id="loadCsvBtn">Load CSV</button>
+      <div style="flex:1"></div>
+      <button class="btn active" id="myListBtn">★ My List <span class="n" id="myListN">0</span></button>
+    </div>
+    <div class="filter-panel" id="filterPanel">
+      <div class="filters">
+        <label class="fld">Business Domain
+          <div class="ms" data-key="domain"></div>
+        </label>
+        <label class="fld">State
+          <div class="ms" data-key="state"></div>
+        </label>
+        <label class="fld">Work Mode
+          <div class="ms" data-key="workMode"></div>
+        </label>
+        <label class="fld">Eligible Branch
+          <div class="ms" data-key="branch"></div>
+        </label>
+        <label class="fld">Project Domain
+          <div class="ms" data-key="projectDomain"></div>
+        </label>
+        <label class="fld">Min Stipend (₹/mo)
+          <input type="number" id="minStipend" min="0" step="5000" placeholder="0">
+        </label>
+        <label class="fld">Max CGPA Required
+          <input type="number" id="maxCgpaReq" min="0" max="10" step="0.1" placeholder="Any">
+        </label>
+        <div class="full toggles">
+          <label class="tog"><input type="checkbox" id="hasStipend"> Has stipend</label>
+          <label class="tog"><input type="checkbox" id="hasMentor"> Has mentor contact</label>
+          <label class="tog"><input type="checkbox" id="hasDesc"> Has description</label>
+          <label class="tog"><input type="checkbox" id="onlyMine"> My list only</label>
+          <label class="tog" title="Companies that already ran an interaction-based selection this semester (from the crowdsourced PS Tracker)"><input type="checkbox" id="onlyVisited"> ★ Only interaction</label>
+          <label class="tog" title="Hide companies that already ran an interaction-based selection"><input type="checkbox" id="hideVisited"> Hide interaction</label>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- upload zone -->
+<div id="upload-zone">
+  <p style="color:var(--muted);font-size:12px;margin-bottom:20px">Export a CSV from the PSMS extension, then drop it here</p>
+  <div class="drop-box" id="dropBox">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <p>Drop your CSV file here</p>
+    <small>Exported from the "Export Full Details" extension</small>
+  </div>
+  <div class="or">— or —</div>
+  <button class="btn primary" id="pickFileBtn" style="padding:8px 22px">Browse file</button>
+</div>
+
+<main id="mainContent" style="display:none">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr id="headRow">
+          <th class="pref-cell">☆</th>
+          <th data-sort="idx"># <span class="arr"></span></th>
+          <th data-sort="stationName">Station <span class="arr"></span></th>
+          <th data-sort="projectTitle">Project <span class="arr"></span></th>
+          <th>Tech</th>
+          <th data-sort="workMode">Mode <span class="arr"></span></th>
+          <th data-sort="state">Location <span class="arr"></span></th>
+          <th data-sort="stipend">Stipend <span class="arr"></span></th>
+          <th data-sort="cgpaMin">CGPA req <span class="arr"></span></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <footer>
+    BITS Pilani PS-II · 2026-27 · Unofficial tool · Data from official PSMS portal via extension
+  </footer>
+</main>
+
+<!-- drawer -->
+<div id="overlay"></div>
+<aside id="drawer">
+  <div class="dhead">
+    <h2>My Preference List</h2>
+    <span class="cnt" id="prefCnt">0 ranked</span>
+    <button class="x" id="drawerClose" title="Close">×</button>
+  </div>
+  <div class="pref-list" id="prefList"></div>
+  <div class="dfoot">
+    <button id="copyText">Copy as text</button>
+    <button id="exportPrefCsv">Export CSV</button>
+    <button id="exportFile">Export file</button>
+    <button id="importFile">Import file</button>
+    <button id="shareLink">Copy share link</button>
+    <button id="clearPrefs" class="danger">Clear all</button>
+  </div>
+</aside>
+
+<input type="file" id="csvInput" accept=".csv,text/csv" style="display:none">
+<input type="file" id="importInput" accept=".json,application/json" style="display:none">
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+const PREFS_KEY = 'ps2_prefs_v2';
+let STATIONS = [];
+let view = [];
+let sortKey = 'idx', sortDir = 1;
+const expanded = new Set();   // open detail rows
+const byId = new Map();
+
+const F = {
+  q: '', domain: new Set(), state: new Set(), workMode: new Set(), branch: new Set(),
+  projectDomain: new Set(),
+  minStipend: 0, myCgpa: null, maxCgpaReq: null,
+  hasStipend: false, hasMentor: false, hasDesc: false, onlyMine: false,
+  onlyVisited: false, hideVisited: false,
+};
+// prefer the clean Business Domain (from project-titles sheet) over the PSMS one
+const bizOf = s => s.bizDomain || s.businessDomain || '';
+let prefs = [];
+const sid = s => s._id;
+const prefRank = id => { const i = prefs.indexOf(id); return i < 0 ? 0 : i + 1; };
+const inPrefs = id => prefs.includes(id);
+
+/* ============================================================
+   CSV PARSER
+   ============================================================ */
+function parseCSV(text) {
+  // strip BOM
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const lines = text.split(/\r?\n/);
+  if (!lines.length) return [];
+
+  function splitRow(line) {
+    const cells = [];
+    let inQ = false, cur = '';
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (c === ',' && !inQ) { cells.push(cur); cur = ''; }
+      else cur += c;
+    }
+    cells.push(cur);
+    return cells;
+  }
+
+  const headers = splitRow(lines[0]).map(h => h.trim());
+  const MAP = {
+    'Station ID': 'stationId', 'Station Name': 'stationName',
+    'Business Domain': 'businessDomain', 'Address': 'address',
+    'State': 'state', 'Country': 'country',
+    'Project Title': 'projectTitle', 'Description': 'description',
+    'Project ID': 'projectId', 'Mentor Name': 'mentorName',
+    'Mentor Email': 'mentorEmail', 'Stipend': 'stipend',
+    'Currency': 'currency', 'Work Mode': 'workMode',
+    'Office Hours': 'officeHours', 'Week Holidays': 'weekHolidays',
+    'CGPA Min': 'cgpaMin', 'CGPA Max': 'cgpaMax',
+    'Intake': 'intake', 'Eligible Branches': 'eligibleBranches',
+  };
+
+  const stations = [];
+  for (let r = 1; r < lines.length; r++) {
+    const line = lines[r].trim();
+    if (!line) continue;
+    const vals = splitRow(line);
+    const s = {};
+    headers.forEach((h, i) => { const k = MAP[h] || h; s[k] = (vals[i] || '').trim(); });
+    s.stipend = Number(s.stipend) || 0;
+    s.cgpaMin = s.cgpaMin ? parseFloat(s.cgpaMin) : null;
+    s.cgpaMax = s.cgpaMax ? parseFloat(s.cgpaMax) : null;
+    s.intake  = s.intake  ? parseInt(s.intake)    : null;
+    // Strip any HTML that came through in descriptions
+    s.description  = stripHtml(s.description);
+    s.projectTitle = stripHtml(s.projectTitle);
+    s._id = s.stationId || String(r);
+    s._idx = r;
+    s._tech = detectTech(s.description + ' ' + s.projectTitle);
+    s._branches = parseBranches(s.eligibleBranches);
+    stations.push(s);
+  }
+  return stations;
+}
+
+/* ============================================================
+   HTML STRIPPER
+   ============================================================ */
+function stripHtml(s) {
+  if (!s) return '';
+  // Replace block elements with newlines
+  s = s.replace(/<br\s*\/?>/gi, '\n')
+       .replace(/<\/?(p|div|li|h[1-6]|blockquote)[^>]*>/gi, '\n')
+       .replace(/<li[^>]*>/gi, '• ');
+  // Remove remaining tags
+  s = s.replace(/<[^>]+>/g, '');
+  // Decode HTML entities
+  const ta = document.createElement('textarea');
+  ta.innerHTML = s;
+  s = ta.value;
+  return s.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/* ============================================================
+   TECH DETECTION
+   ============================================================ */
+const TECH_RE = /\b(Python|Java(?:Script)?|TypeScript|React(?:\.js)?|Angular|Vue(?:\.js)?|Node\.?js|Next\.?js|Nuxt|Svelte|Django|Flask|FastAPI|Spring|Express|PHP|Ruby(?:\s+on\s+Rails)?|Go(?:lang)?|Rust|C\+\+|C#|\.NET|Swift|Kotlin|Flutter|SQL|MySQL|PostgreSQL|MongoDB|Redis|Elasticsearch|GraphQL|REST(?:\s+API)?|gRPC|Docker|Kubernetes|AWS|Azure|GCP|TensorFlow|PyTorch|Scikit(?:-|\s*)learn|Pandas|NumPy|MATLAB|Tableau|Power\s*BI|SAP|Salesforce|Figma|AutoCAD|SolidWorks|VLSI|FPGA|Verilog|Arduino|Raspberry\s*Pi|Embedded|Machine\s+Learning|Deep\s+Learning|NLP|Computer\s+Vision|HTML|CSS|Tailwind|Bootstrap|Kafka|RabbitMQ|gRPC|Terraform|Ansible)\b/gi;
+function detectTech(text) {
+  if (!text) return [];
+  const found = new Set();
+  let m;
+  const re = new RegExp(TECH_RE.source, 'gi');
+  while ((m = re.exec(text)) !== null) found.add(m[0].replace(/\s+/g,' ').replace(/^react\.js$/i,'React').replace(/^vue\.js$/i,'Vue').replace(/^node\.?js$/i,'Node.js').replace(/^next\.?js$/i,'Next.js'));
+  return [...found].slice(0, 12);
+}
+
+/* ============================================================
+   BRANCH PARSING
+   ============================================================ */
+const BRANCH_MAP = {
+  A1:'Chem Eng', A2:'Civil Eng', A3:'EEE', A4:'Mech Eng', A5:'B.Pharm',
+  A7:'CS', A8:'EI', AA:'ECE', AB:'Mfg Eng', AC:'Engg Tech', AD:'Math & Computing',
+  AJ:'Bio Eng', B1:'Bio', B2:'Chemistry', B3:'Economics', B4:'Mathematics', B5:'Physics',
+};
+function parseBranches(raw) {
+  if (!raw) return [];
+  const result = [];
+  for (const b of raw.split(',').map(s => s.trim()).filter(Boolean)) {
+    // "AnyA7" → strip "Any" prefix → "A7" → "CS"
+    // "B3A7" → dual degree → "Economics + CS"
+    const isAny = b.startsWith('Any');
+    const code  = isAny ? b.slice(3) : b;
+    let label;
+    if (code.length >= 4 && BRANCH_MAP[code.slice(0,2)] && BRANCH_MAP[code.slice(2)]) {
+      // dual degree like "B3A7"
+      label = BRANCH_MAP[code.slice(0,2)] + ' + ' + BRANCH_MAP[code.slice(2)];
+    } else {
+      label = BRANCH_MAP[code] || code;
+    }
+    if (!result.includes(label)) result.push(label);
+  }
+  return result;
+}
+
+/* ============================================================
+   FILTER + SORT
+   ============================================================ */
+let stipSorted = [];
+function stipPct(n) {
+  if (!stipSorted.length || !n) return 0;
+  let lo = 0, hi = stipSorted.length;
+  while (lo < hi) { const m = (lo+hi)>>1; if (stipSorted[m] <= n) lo = m+1; else hi = m; }
+  return lo / stipSorted.length;
+}
+
+function applyFilters() {
+  const q = F.q.toLowerCase().trim();
+  view = STATIONS.filter(s => {
+    if (q) {
+      const hay = (s.stationName + ' ' + s.projectTitle + ' ' + s.description + ' ' + s.mentorName + ' ' + s._tech.join(' ') + ' ' + bizOf(s) + ' ' + (s.projectDomains||[]).join(' ') + ' ' + (s.visitedCompanies||[]).join(' ')).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    if (F.domain.size && !F.domain.has(bizOf(s)))         return false;
+    if (F.state.size  && !F.state.has(s.state))           return false;
+    if (F.workMode.size && !F.workMode.has(normMode(s.workMode))) return false;
+    if (F.branch.size) { if (!s._branches.some(b => F.branch.has(b))) return false; }
+    if (F.projectDomain.size) { if (!(s.projectDomains||[]).some(d => F.projectDomain.has(d))) return false; }
+    if (F.onlyVisited && !s.visited) return false;
+    if (F.hideVisited &&  s.visited) return false;
+    if (F.minStipend && s.stipend < F.minStipend) return false;
+    if (F.maxCgpaReq !== null && s.cgpaMin !== null && s.cgpaMin > F.maxCgpaReq) return false;
+    if (F.myCgpa    !== null && s.cgpaMin !== null && s.cgpaMin > F.myCgpa) return false;
+    if (F.hasStipend && !s.stipend) return false;
+    if (F.hasMentor  && !s.mentorName) return false;
+    if (F.hasDesc    && !s.description) return false;
+    if (F.onlyMine   && !inPrefs(sid(s))) return false;
+    return true;
+  });
+  if (!F.onlyMine) sortView();
+  else view.sort((a,b) => prefRank(sid(a)) - prefRank(sid(b)));
+  render();
+}
+
+function normMode(m) {
+  const s = (m || '').toLowerCase();
+  if (s.includes('remote') && !s.includes('hybrid')) return 'Remote';
+  if (s.includes('hybrid')) return 'Hybrid';
+  if (s.includes('office') || s.includes('onsite') || s.includes('on-site')) return 'Office';
+  return m || '—';
+}
+
+function sortVal(s) {
+  switch (sortKey) {
+    case 'stipend':      return s.stipend;
+    case 'cgpaMin':      return s.cgpaMin ?? 99;
+    case 'stationName':  return s.stationName.toLowerCase();
+    case 'projectTitle': return s.projectTitle.toLowerCase();
+    case 'state':        return (s.state + s.stationName).toLowerCase();
+    case 'workMode':     return normMode(s.workMode);
+    default:             return s._idx;
+  }
+}
+function sortView() {
+  view.sort((a,b) => {
+    const va = sortVal(a), vb = sortVal(b);
+    return va < vb ? -sortDir : va > vb ? sortDir : 0;
+  });
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtMoney = (n, cur='INR') => n ? (cur==='USD'?'$':'₹') + Number(n).toLocaleString('en-IN') : '—';
+
+function modeChip(raw) {
+  const m = normMode(raw);
+  if (m === '—') return `<span style="color:var(--muted)">—</span>`;   // no data — plain dash
+  const cls = {Remote:'wm-remote',Hybrid:'wm-hybrid',Office:'wm-office'}[m] || 'wm-unknown';
+  const ico = {Remote:'🏠',Hybrid:'🔄',Office:'🏢'}[m] || '';
+  return `<span class="wm-chip ${cls}">${ico} ${esc(m)}</span>`;
+}
+
+function cgpaCell(s) {
+  if (s.cgpaMin === null) return `<span class="cgpa-na">—</span>`;
+  const label = s.cgpaMin === 0 ? 'Any' : s.cgpaMin.toFixed(1);
+  if (F.myCgpa !== null) {
+    const ok = s.cgpaMin <= F.myCgpa;
+    return `<span class="${ok?'cgpa-ok':'cgpa-no'}" title="${ok?'You are eligible':'Need '+s.cgpaMin.toFixed(1)}">${label} ${ok?'✓':'✗'}</span>`;
+  }
+  return `<span class="${s.cgpaMin===0?'cgpa-na':''}">${label}</span>`;
+}
+
+function techPills(s) {
+  const t = s._tech;
+  if (!t.length) return `<span style="color:var(--muted)">—</span>`;
+  return `<div class="tech-pills">${t.slice(0,3).map(x=>`<span>${esc(x)}</span>`).join('')}${t.length>3?`<span class="more" title="${esc(t.slice(3).join(', '))}">+${t.length-3}</span>`:''}</div>`;
+}
+
+function render() {
+  const tbody = document.getElementById('tbody');
+  document.getElementById('countPill').textContent = `${view.length} / ${STATIONS.length}`;
+  if (!view.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:50px;color:var(--muted)">No stations match. <a href="#" onclick="doReset();return false" style="color:var(--accent)">Reset filters</a></td></tr>`;
+    return;
+  }
+  const rows = [];
+  for (let i = 0; i < view.length; i++) {
+    const s = view[i];
+    const id = sid(s);
+    const isOpen = expanded.has(id);
+    const rank = prefRank(id);
+    const stip = s.stipend;
+    const pct = stipPct(stip);
+    const isLast = (i === view.length - 1) && !isOpen;
+    const prefCell = rank
+      ? `<span class="rank-badge" data-pref="${esc(id)}" title="Click to remove">#${rank}</span>`
+      : `<button class="add-btn" data-pref="${esc(id)}" title="Add to list">+</button>`;
+
+    rows.push(`<tr class="main-row${isOpen?' open':''}${isLast?' last-row':''}" data-id="${esc(id)}">
+      <td class="pref-cell">${prefCell}</td>
+      <td style="color:var(--muted);font-size:12px">${s._idx}</td>
+      <td class="name-cell"><div class="station-name" title="${esc(s.stationName)}">${esc(s.stationName)}</div><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px">${bizOf(s)?`<span class="dom-tag" title="${esc(bizOf(s))}">${esc(bizOf(s))}</span>`:''}${s.visited?`<span class="vis-chip" title="Interaction company — ${esc((s.visitedCompanies||[]).join('; '))}. Verify on PSMS.">★ Interaction</span>`:''}</div></td>
+      <td style="max-width:320px"><div style="font-size:13px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${esc(s.projectTitle||'—')}</div></td>
+      <td>${techPills(s)}</td>
+      <td>${modeChip(s.workMode)}</td>
+      <td><div style="font-size:13px">${esc(s.state||'—')}</div>${s.address?`<div style="color:var(--muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px" title="${esc(s.address)}">${esc(s.address.split(',')[0])}</div>`:''}</td>
+      <td class="stip-cell"><div class="stip-val${stip?'':' zero'}">${fmtMoney(stip, s.currency)}</div>${stip?`<div class="stip-bar"><i style="width:${Math.max(4,Math.round(pct*100))}%"></i></div>`:''}</td>
+      <td>${cgpaCell(s)}</td>
+    </tr>`);
+
+    if (isOpen) {
+      rows.push(`<tr class="detail-row${i===view.length-1?' last-row':''}"><td colspan="9">${detailHTML(s)}</td></tr>`);
+    }
+  }
+  tbody.innerHTML = rows.join('');
+}
+
+/* ── detail expanded view ── */
+function detailHTML(s) {
+  const id = sid(s);
+  return `<div class="detail-box">
+    <div class="detail-tabs">
+      <button class="dtab on" data-tab="overview" data-id="${esc(id)}">Overview</button>
+      <button class="dtab" data-tab="requirements" data-id="${esc(id)}">Requirements</button>
+      <button class="dtab" data-tab="contact" data-id="${esc(id)}">Contact & Hours</button>
+    </div>
+    <div class="tab-pane on" id="tab-overview-${esc(id)}">
+      <div class="detail-grid">
+        ${s.visited ? `<div class="dblock full"><div class="vis-note">★ <b>Interaction company.</b> ${esc((s.visitedCompanies||[]).join('; '))} appears in the crowdsourced PS Tracker, meaning this company already ran (or is running) its own interaction-based selection this semester — not a pure CGPA/resume allotment. This is a company-level signal; verify the specific role on PSMS.</div></div>`:''}
+        <div class="dblock full">
+          <h4>${esc(s.projectTitle || 'Project Description')}</h4>
+          <div class="desc">${esc(s.description) || '<span class="no-data">No description available.</span>'}</div>
+        </div>
+        ${(s.projectDomains&&s.projectDomains.length) ? `<div class="dblock">
+          <h4>Project Domains</h4>
+          <div class="pill-list amber">${s.projectDomains.map(d=>`<span>${esc(d)}</span>`).join('')}</div>
+        </div>`:''}
+        ${s._tech.length ? `<div class="dblock">
+          <h4>Detected Technologies</h4>
+          <div class="pill-list">${s._tech.map(t=>`<span>${esc(t)}</span>`).join('')}</div>
+        </div>`:''}
+        <div class="dblock">
+          <h4>Quick Info</h4>
+          <dl class="kv">
+            <dt>Domain</dt><dd>${esc(bizOf(s)||'—')}</dd>
+            <dt>Work Mode</dt><dd>${modeChip(s.workMode)}</dd>
+            <dt>Location</dt><dd>${esc(s.address||'—')}</dd>
+            <dt>State</dt><dd>${esc(s.state||'—')}</dd>
+            <dt>Country</dt><dd>${esc(s.country||'—')}</dd>
+            ${s.stipend?`<dt>Stipend</dt><dd style="font-weight:600">${fmtMoney(s.stipend, s.currency)}/mo</dd>`:''}
+          </dl>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane" id="tab-requirements-${esc(id)}">
+      <div class="detail-grid">
+        <div class="dblock">
+          <h4>CGPA Requirements</h4>
+          <dl class="kv">
+            <dt>Min CGPA</dt><dd>${s.cgpaMin !== null ? `<strong>${s.cgpaMin.toFixed(2)}</strong>${F.myCgpa!==null?s.cgpaMin<=F.myCgpa?' <span style="color:var(--green)">✓ Eligible</span>':' <span style="color:var(--red)">✗ Not eligible</span>':''}`:'<span class="no-data">Not specified</span>'}</dd>
+            <dt>Max CGPA</dt><dd>${s.cgpaMax !== null ? s.cgpaMax.toFixed(2) : '<span class="no-data">—</span>'}</dd>
+            <dt>Intake</dt><dd>${s.intake !== null ? s.intake + ' students' : '<span class="no-data">—</span>'}</dd>
+          </dl>
+        </div>
+        <div class="dblock">
+          <h4>Eligible Branches</h4>
+          ${s._branches.length
+            ? `<div class="pill-list green">${s._branches.map(b=>`<span>${esc(b)}</span>`).join('')}</div>`
+            : `<div class="no-data">Not specified or all branches eligible</div>`}
+          ${s.eligibleBranches ? `<div style="margin-top:8px;font-size:11px;color:var(--muted)">Raw: ${esc(s.eligibleBranches)}</div>` : ''}
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane" id="tab-contact-${esc(id)}">
+      <div class="detail-grid">
+        ${s.mentorName ? `<div class="dblock">
+          <h4>Mentor</h4>
+          <div class="mentor-card">
+            <div class="mentor-avatar">${esc(s.mentorName.charAt(0).toUpperCase())}</div>
+            <div class="mentor-info">
+              <div class="nm">${esc(s.mentorName)}</div>
+              ${s.mentorEmail ? `<div class="em"><a href="mailto:${esc(s.mentorEmail)}">${esc(s.mentorEmail)}</a></div>` : ''}
+            </div>
+          </div>
+        </div>` : `<div class="dblock"><h4>Mentor</h4><div class="no-data">No mentor info captured yet.</div></div>`}
+        <div class="dblock">
+          <h4>Work Schedule</h4>
+          <dl class="kv">
+            <dt>Office Hours</dt><dd>${esc(s.officeHours||'—')}</dd>
+            <dt>Week Holidays</dt><dd>${esc(s.weekHolidays||'—')}</dd>
+          </dl>
+        </div>
+        <div class="dblock full" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn pref-action-btn" data-pref="${esc(id)}">${inPrefs(id)?'★ In my list — remove':'☆ Add to my list'}</button>
+          ${s.stationId ? `<a class="src-link" target="_blank" href="https://psms.bits-pilani.ac.in/stationpreference/student/stationdetails/${esc(s.stationId)}">Open on PSMS portal ↗</a>` : ''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   MULTISELECT
+   ============================================================ */
+function buildMS(container, options) {
+  const key = container.dataset.key;
+  const stateSet = F[key];
+  container.innerHTML = `<div class="ms-display"><span class="ph">Any</span></div>
+    <div class="ms-pop"><input type="text" class="msf" placeholder="Filter…"><div class="ms-list"></div></div>`;
+  const display = container.querySelector('.ms-display');
+  const list    = container.querySelector('.ms-list');
+  const fi      = container.querySelector('.msf');
+
+  const renderList = (q='') => {
+    const ql = q.toLowerCase();
+    list.innerHTML = options.filter(o => o.toLowerCase().includes(ql)).map(o =>
+      `<label class="ms-opt"><input type="checkbox" value="${esc(o)}" ${stateSet.has(o)?'checked':''}> ${esc(o)}</label>`
+    ).join('') || `<div class="ms-opt" style="color:var(--muted)">No matches</div>`;
+  };
+  const renderDisplay = () => {
+    if (!stateSet.size) { display.innerHTML = `<span class="ph">Any</span>`; return; }
+    const arr = [...stateSet];
+    display.innerHTML = arr.slice(0,3).map(v=>`<span class="chip">${esc(v)}</span>`).join('')
+      + (arr.length>3 ? `<span class="chip">+${arr.length-3}</span>` : '');
+  };
+  renderList(); renderDisplay();
+  display.onclick = () => {
+    document.querySelectorAll('.ms.open').forEach(m => { if (m!==container) m.classList.remove('open'); });
+    container.classList.toggle('open');
+    if (container.classList.contains('open')) fi.focus();
+  };
+  fi.oninput = () => renderList(fi.value);
+  list.onchange = e => {
+    if (e.target.type !== 'checkbox') return;
+    e.target.checked ? stateSet.add(e.target.value) : stateSet.delete(e.target.value);
+    renderDisplay(); applyFilters();
+  };
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.ms')) document.querySelectorAll('.ms.open').forEach(m => m.classList.remove('open'));
+});
+
+/* ============================================================
+   PREFERENCE LIST
+   ============================================================ */
+function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch(e){} }
+function togglePref(id) { const i = prefs.indexOf(id); i < 0 ? prefs.push(id) : prefs.splice(i,1); afterPrefs(); }
+function removePref(id) { const i = prefs.indexOf(id); if (i>=0) { prefs.splice(i,1); afterPrefs(); } }
+function movePref(id, dir) {
+  const i = prefs.indexOf(id), j = i+dir;
+  if (i<0||j<0||j>=prefs.length) return;
+  [prefs[i],prefs[j]] = [prefs[j],prefs[i]]; afterPrefs();
+}
+function reorder(from, to) {
+  if (from===to||from<0||to<0) return;
+  const [x] = prefs.splice(from,1); prefs.splice(to,0,x); afterPrefs();
+}
+function afterPrefs() { savePrefs(); refreshPrefUI(); }
+function refreshPrefUI() {
+  document.getElementById('myListN').textContent = prefs.length;
+  document.getElementById('prefCnt').textContent = `${prefs.length} ranked`;
+  renderDrawer(); applyFilters();
+}
+function renderDrawer() {
+  const list = document.getElementById('prefList');
+  if (!prefs.length) { list.innerHTML = `<div class="pempty">No stations yet.<br>Click <b>+</b> on any row to add to your ranked list.</div>`; return; }
+  list.innerHTML = prefs.map((id,i) => {
+    const s = byId.get(id); if (!s) return '';
+    const stip = s.stipend ? fmtMoney(s.stipend, s.currency)+'/mo' : '';
+    const loc = [s.address?.split(',')[0], s.state].filter(Boolean).join(', ');
+    return `<div class="pitem" draggable="true" data-idx="${i}" data-id="${esc(id)}">
+      <span class="grip">⠿</span>
+      <span class="rnk">${i+1}</span>
+      <div class="info"><div class="nm">${esc(s.stationName)}</div><div class="meta">${esc(s.businessDomain||'')}${loc?' · '+esc(loc):''}${stip?' · '+esc(stip):''}</div></div>
+      <div class="acts">
+        <button data-move="up" title="Up">▲</button>
+        <button data-move="down" title="Down">▼</button>
+        <button class="rm" data-rm="1" title="Remove">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let dragFrom = -1;
+document.getElementById('prefList').addEventListener('dragstart', e => {
+  const it = e.target.closest('.pitem'); if (!it) return;
+  dragFrom = +it.dataset.idx; it.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+});
+document.getElementById('prefList').addEventListener('dragover', e => {
+  e.preventDefault();
+  const it = e.target.closest('.pitem');
+  document.querySelectorAll('.pitem.drag-over').forEach(el => el.classList.remove('drag-over'));
+  if (it && +it.dataset.idx !== dragFrom) it.classList.add('drag-over');
+});
+document.getElementById('prefList').addEventListener('drop', e => {
+  e.preventDefault();
+  const it = e.target.closest('.pitem');
+  if (it && dragFrom >= 0) reorder(dragFrom, +it.dataset.idx);
+});
+document.getElementById('prefList').addEventListener('dragend', () => {
+  dragFrom = -1;
+  document.querySelectorAll('.pitem.dragging,.pitem.drag-over').forEach(el => el.classList.remove('dragging','drag-over'));
+});
+document.getElementById('prefList').addEventListener('click', e => {
+  const it = e.target.closest('.pitem'); if (!it) return;
+  const id = it.dataset.id;
+  if (e.target.dataset.move) movePref(id, e.target.dataset.move==='up'?-1:1);
+  else if (e.target.dataset.rm) removePref(id);
+});
+
+/* ============================================================
+   EXPORT / IMPORT ACTIONS
+   ============================================================ */
+let toastT;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+const csvQ = v => `"${String(v??'').replace(/"/g,'""').replace(/\n/g,' ')}"`;
+function prefStations() { return prefs.map(id => byId.get(id)).filter(Boolean); }
+
+function openDrawer()  { document.getElementById('drawer').classList.add('open'); document.getElementById('overlay').classList.add('open'); }
+function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
+document.getElementById('myListBtn').addEventListener('click', openDrawer);
+document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+document.getElementById('overlay').addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeDrawer(); });
+
+document.getElementById('copyText').addEventListener('click', () => {
+  if (!prefs.length) return toast('List is empty');
+  const text = prefStations().map((s,i) => `${i+1}. ${s.stationName} · ${s.state||'?'} · ${s.stipend?fmtMoney(s.stipend,s.currency)+'/mo':'no stipend'}`).join('\n');
+  navigator.clipboard.writeText(text).then(() => toast('Copied!')).catch(() => toast('Copy failed'));
+});
+document.getElementById('exportPrefCsv').addEventListener('click', () => {
+  if (!prefs.length) return toast('List is empty');
+  const cols = ['rank','stationId','stationName','businessDomain','state','stipend','currency','cgpaMin','mentorName','mentorEmail','workMode'];
+  const lines = [cols.join(',')];
+  prefStations().forEach((s,i) => lines.push([i+1,s.stationId,s.stationName,s.businessDomain,s.state,s.stipend,s.currency,s.cgpaMin??'',s.mentorName,s.mentorEmail,s.workMode].map(csvQ).join(',')));
+  dlBlob(lines.join('\n'), 'ps2_preferences.csv', 'text/csv');
+  toast('CSV exported');
+});
+document.getElementById('exportFile').addEventListener('click', () => {
+  if (!prefs.length) return toast('List is empty');
+  dlBlob(JSON.stringify({version:1,prefs},null,2), 'ps2_preferences.json', 'application/json');
+  toast('File exported');
+});
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const cols = ['stationId','stationName','businessDomain','state','address','workMode','stipend','currency','cgpaMin','cgpaMax','intake','mentorName','mentorEmail','officeHours','weekHolidays','projectTitle','description','eligibleBranches'];
+  const lines = [cols.join(',')];
+  view.forEach(s => lines.push(cols.map(k => csvQ(s[k])).join(',')));
+  dlBlob(lines.join('\n'), 'ps2_stations.csv', 'text/csv');
+  toast(`Exported ${view.length} stations`);
+});
+function dlBlob(content, name, type) {
+  const a = Object.assign(document.createElement('a'), {href: URL.createObjectURL(new Blob([content],{type})), download: name});
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+document.getElementById('shareLink').addEventListener('click', () => {
+  if (!prefs.length) return toast('List is empty');
+  const url = location.origin + location.pathname + '#p=' + prefs.map(id=>byId.get(id)?._idx||'').filter(Boolean).join(',');
+  navigator.clipboard.writeText(url).then(() => toast('Share link copied!')).catch(() => toast('Copy failed'));
+});
+document.getElementById('importFile').addEventListener('click', () => document.getElementById('importInput').click());
+document.getElementById('importInput').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const data = JSON.parse(r.result);
+      const ids = (data.prefs || data || []).filter(id => byId.has(id));
+      if (!ids.length) return toast('No valid stations in file');
+      prefs = ids; afterPrefs(); openDrawer(); toast(`Imported ${ids.length} stations`);
+    } catch { toast('Invalid file'); }
+  };
+  r.readAsText(file); e.target.value = '';
+});
+document.getElementById('clearPrefs').addEventListener('click', () => {
+  if (!prefs.length) return;
+  if (confirm('Clear your entire preference list?')) { prefs = []; afterPrefs(); }
+});
+
+/* ============================================================
+   HEADER INTERACTIONS
+   ============================================================ */
+const filterPanel = document.getElementById('filterPanel');
+const filterToggle = document.getElementById('filterToggle');
+let filtersOpen = false, ovTimer, hRafId;
+
+function updateHeaderH() {
+  const h = document.querySelector('header.top');
+  if (h) document.documentElement.style.setProperty('--header-h', h.getBoundingClientRect().height + 'px');
+}
+
+// Animate --header-h updates for the full duration of the CSS transition (350ms)
+function animateHeaderH() {
+  cancelAnimationFrame(hRafId);
+  const end = performance.now() + 380;   // slightly past the transition
+  function tick() {
+    updateHeaderH();
+    if (performance.now() < end) hRafId = requestAnimationFrame(tick);
+  }
+  hRafId = requestAnimationFrame(tick);
+}
+
+function setFilters(open) {
+  filtersOpen = open;
+  filterPanel.classList.toggle('open', open);
+  filterToggle.textContent = open ? 'Filters ▲' : 'Filters ▼';
+  filterToggle.classList.toggle('active', open);
+  clearTimeout(ovTimer);
+  if (open) {
+    ovTimer = setTimeout(() => { if (filtersOpen) filterPanel.style.overflow = 'visible'; }, 360);
+  } else {
+    filterPanel.style.overflow = '';
+  }
+  // Continuously update --header-h during the CSS max-height transition
+  animateHeaderH();
+}
+filterToggle.addEventListener('click', () => setFilters(!filtersOpen));
+
+/* sticky header height tracking — initial + resize */
+(function() {
+  updateHeaderH();
+  window.addEventListener('load', updateHeaderH);
+  if (window.ResizeObserver) new ResizeObserver(updateHeaderH).observe(document.querySelector('header.top'));
+  window.addEventListener('resize', updateHeaderH, {passive: true});
+})();
+
+let stimer;
+document.getElementById('search').addEventListener('input', e => {
+  clearTimeout(stimer);
+  stimer = setTimeout(() => { F.q = e.target.value; applyFilters(); }, 180);
+});
+document.getElementById('cgpaInput').addEventListener('input', e => {
+  F.myCgpa = e.target.value ? parseFloat(e.target.value) : null;
+  const badge = document.getElementById('cgpaBadge');
+  badge.style.display = F.myCgpa !== null ? '' : 'none';
+  applyFilters();
+});
+document.getElementById('minStipend').addEventListener('input', e => { F.minStipend = Number(e.target.value)||0; applyFilters(); });
+document.getElementById('maxCgpaReq').addEventListener('input', e => { F.maxCgpaReq = e.target.value ? parseFloat(e.target.value) : null; applyFilters(); });
+document.getElementById('hasStipend').addEventListener('change', e => { F.hasStipend = e.target.checked; applyFilters(); });
+document.getElementById('hasMentor').addEventListener('change', e => { F.hasMentor = e.target.checked; applyFilters(); });
+document.getElementById('hasDesc').addEventListener('change', e => { F.hasDesc = e.target.checked; applyFilters(); });
+document.getElementById('onlyMine').addEventListener('change', e => { F.onlyMine = e.target.checked; applyFilters(); });
+document.getElementById('onlyVisited').addEventListener('change', e => {
+  F.onlyVisited = e.target.checked;
+  if (F.onlyVisited) { F.hideVisited = false; document.getElementById('hideVisited').checked = false; }
+  applyFilters();
+});
+document.getElementById('hideVisited').addEventListener('change', e => {
+  F.hideVisited = e.target.checked;
+  if (F.hideVisited) { F.onlyVisited = false; document.getElementById('onlyVisited').checked = false; }
+  applyFilters();
+});
+document.getElementById('resetBtn').addEventListener('click', doReset);
+
+function doReset() {
+  F.q=''; F.minStipend=0; F.myCgpa=null; F.maxCgpaReq=null;
+  ['domain','state','workMode','branch','projectDomain'].forEach(k => F[k].clear());
+  F.hasStipend=F.hasMentor=F.hasDesc=F.onlyMine=F.onlyVisited=F.hideVisited=false;
+  document.getElementById('search').value = '';
+  document.getElementById('cgpaInput').value = '';
+  document.getElementById('minStipend').value = '';
+  document.getElementById('maxCgpaReq').value = '';
+  document.getElementById('cgpaBadge').style.display = 'none';
+  ['hasStipend','hasMentor','hasDesc','onlyMine','onlyVisited','hideVisited'].forEach(id => { document.getElementById(id).checked = false; });
+  document.querySelectorAll('.ms').forEach(c => { if (c._opts) buildMS(c, c._opts); });
+  if (filtersOpen) setFilters(false);
+  applyFilters();
+}
+
+/* ============================================================
+   TABLE INTERACTIONS
+   ============================================================ */
+document.getElementById('tbody').addEventListener('click', e => {
+  const prefEl = e.target.closest('[data-pref]');
+  if (prefEl) { e.stopPropagation(); togglePref(prefEl.dataset.pref); render(); refreshPrefUI(); return; }
+
+  const dtab = e.target.closest('[data-tab]');
+  if (dtab) {
+    const id = dtab.dataset.id;
+    const box = dtab.closest('.detail-box');
+    box.querySelectorAll('.dtab').forEach(t => t.classList.toggle('on', t.dataset.tab === dtab.dataset.tab));
+    box.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('on', p.id === `tab-${dtab.dataset.tab}-${id}`));
+    return;
+  }
+
+  const tr = e.target.closest('tr.main-row');
+  if (!tr) return;
+  const id = tr.dataset.id;
+  expanded.has(id) ? expanded.delete(id) : expanded.add(id);
+  render();
+});
+
+document.getElementById('headRow').addEventListener('click', e => {
+  const th = e.target.closest('th'); if (!th || !th.dataset.sort) return;
+  const key = th.dataset.sort;
+  if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = key === 'stipend' ? -1 : 1; }
+  document.querySelectorAll('#headRow th').forEach(t => { t.classList.remove('sorted'); if (t.querySelector('.arr')) t.querySelector('.arr').textContent = ''; });
+  th.classList.add('sorted');
+  if (th.querySelector('.arr')) th.querySelector('.arr').textContent = sortDir > 0 ? '▲' : '▼';
+  sortView(); render();
+});
+
+/* ============================================================
+   CSV LOADING
+   ============================================================ */
+function loadStations(stations) {
+  if (!stations.length) { toast('No stations found in file'); return; }
+  STATIONS = stations;
+  STATIONS.forEach(s => byId.set(sid(s), s));
+  // Use pre-computed stipend percentiles from clean.py if available
+  stipSorted = STATIONS.map(s => s.stipend).filter(n => n > 0).sort((a,b) => a-b);
+
+  // If stations.json already has cleaned fields, back-fill _tech/_branches
+  STATIONS.forEach(s => {
+    if (!s._tech)     s._tech     = s.techStack  || detectTech(s.description + ' ' + s.projectTitle);
+    if (!s._branches) s._branches = s.branches   || parseBranches(s.eligibleBranches);
+    // ensure descriptions are clean even when loaded from JSON
+    s.description  = stripHtml(s.description  || '');
+    s.projectTitle = stripHtml(s.projectTitle || '');
+  });
+
+  const withDetails = STATIONS.filter(s => s.projectTitle || s.mentorName || s.stipend).length;
+  const nVisited = STATIONS.filter(s => s.visited).length;
+  const extractedAt = window._extractedAt ? ` · extracted ${window._extractedAt.slice(0,10)}` : '';
+  document.getElementById('metaSub').textContent =
+    `${STATIONS.length} stations · PS II · 2026-27 · ${withDetails} with full details · ${nVisited} interaction-flagged${extractedAt}`;
+
+  const uniq = fn => { const s = new Set(); STATIONS.forEach(x => { const v = fn(x); if (Array.isArray(v)) v.forEach(i => i && s.add(i)); else if (v) s.add(v); }); return [...s].sort(); };
+  const opts = {
+    domain:        uniq(s => bizOf(s)),
+    state:         uniq(s => s.state),
+    workMode:      uniq(s => normMode(s.workMode)),
+    branch:        uniq(s => s._branches),
+    projectDomain: uniq(s => s.projectDomains),
+  };
+  document.querySelectorAll('.ms').forEach(c => {
+    c._opts = opts[c.dataset.key] || [];
+    buildMS(c, c._opts);
+  });
+
+  // load prefs from localStorage
+  try {
+    const saved = JSON.parse(localStorage.getItem(PREFS_KEY) || '[]');
+    if (Array.isArray(saved)) prefs = saved.filter(id => byId.has(id));
+  } catch(e) {}
+
+  // share link
+  const m = location.hash.match(/^#p=(.+)$/);
+  if (m) {
+    const ids = m[1].split(',').map(n => STATIONS.find(s => s._idx === +n)).filter(Boolean).map(sid);
+    if (ids.length) { prefs = ids; savePrefs(); }
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+
+  document.getElementById('upload-zone').classList.remove('vis');
+  document.getElementById('mainContent').style.display = '';
+
+  view = [...STATIONS]; sortView(); render(); refreshPrefUI();
+}
+
+function loadCSVText(text) {
+  try {
+    const stations = parseCSV(text);
+    loadStations(stations);
+  } catch(e) { toast('Failed to parse CSV: ' + e.message); }
+}
+
+/* file pick buttons */
+document.getElementById('loadCsvBtn').addEventListener('click', () => document.getElementById('csvInput').click());
+document.getElementById('pickFileBtn').addEventListener('click', () => document.getElementById('csvInput').click());
+document.getElementById('csvInput').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => loadCSVText(ev.target.result);
+  r.readAsText(file); e.target.value = '';
+});
+
+/* drag and drop */
+const dropBox = document.getElementById('dropBox');
+['dragenter','dragover'].forEach(ev => dropBox.addEventListener(ev, e => { e.preventDefault(); dropBox.classList.add('dragover'); }));
+['dragleave','drop'].forEach(ev => dropBox.addEventListener(ev, () => dropBox.classList.remove('dragover')));
+dropBox.addEventListener('drop', e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => loadCSVText(ev.target.result);
+  r.readAsText(file);
+});
+document.body.addEventListener('dragover', e => e.preventDefault());
+document.body.addEventListener('drop', e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0]; if (!file || !file.name.endsWith('.csv')) return;
+  const r = new FileReader();
+  r.onload = ev => loadCSVText(ev.target.result);
+  r.readAsText(file);
+});
+
+/* ============================================================
+   INIT — try loading stations.json first
+   ============================================================ */
+async function init() {
+  try {
+    const res = await fetch('./stations.json');
+    if (res.ok) {
+      const data = await res.json();
+      const stations = parseCSV(data.csv || '') || (Array.isArray(data) ? data : null);
+      if (Array.isArray(data.stations)) {
+        // Output of clean.py — fields already cleaned, branches decoded
+        if (data.extracted_at) window._extractedAt = data.extracted_at;
+        loadStations(data.stations.map((s, i) => ({
+          ...s,
+          _id:       String(s.stationId || i),
+          _idx:      i + 1,
+          // _tech and _branches will be filled by loadStations' back-fill loop
+          stationId: String(s.stationId || ''),
+          stipend:   Number(s.stipend) || 0,
+          cgpaMin:   s.cgpaMin  != null ? parseFloat(s.cgpaMin)  : null,
+          cgpaMax:   s.cgpaMax  != null ? parseFloat(s.cgpaMax)  : null,
+          intake:    s.intake   != null ? parseInt(s.intake)     : null,
+        })));
+        return;
+      }
+    }
+  } catch(e) {}
+  // no data — show upload zone
+  document.getElementById('upload-zone').classList.add('vis');
+  document.getElementById('countPill').textContent = 'No data';
+  document.getElementById('metaSub').textContent = 'Load a CSV to begin';
+}
+init();
+</script>
+</body>
+</html>
