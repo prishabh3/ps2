@@ -261,10 +261,28 @@ tr.detail-row > td{padding:0;background:var(--surface)}
 footer{color:var(--muted);font-size:11.5px;text-align:center;padding:28px 20px;border-top:1px solid var(--border);margin-top:20px}
 
 @media(max-width:720px){
+  main{padding:0 10px 56px}
+  header{padding:11px 13px}
+  .title-row{gap:8px}
+  h1{font-size:15px}
+  .pill{font-size:11px;padding:2px 8px}
+  /* search + cgpa stack; 16px inputs stop iOS zoom-on-focus */
+  .search-row{flex-wrap:wrap}
+  .search-wrap{flex:1 1 100%}
+  .cgpa-wrap{display:none}
+  input,select{font-size:16px}
+  .actions{gap:6px}
+  .btn{padding:6px 10px;font-size:12px}
+  .filters{grid-template-columns:1fr 1fr;padding:11px;gap:8px}
+  /* the table scrolls sideways inside its own box, so the page never goes wide */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:660px;font-size:13px}
+  thead th{padding:7px 9px}
+  tbody td{padding:9px}
   .detail-grid{grid-template-columns:1fr}
   .dblock.full{grid-column:1}
-  .cgpa-wrap{display:none}
-  header{padding:11px 14px}
+  .detail-box{padding:13px}
+  #drawer{width:100vw;max-width:100vw}
 }
 </style>
 </head>
